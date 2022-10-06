@@ -1,0 +1,295 @@
+---
+title: "MultiOcc_Anal"
+author: "Danielle Ethier"
+date: '2022-07-06'
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+
+Now that we have build the multi-species occupancy model framework, we can test the analysis. 
+
+#Load libraries
+
+```{r libraries}
+
+#You can install naturecounts from GitHub with the remotes package if you don't have it already. 
+#install.packages("remotes")
+#remotes::install_github("BirdsCanada/naturecounts")
+
+require(naturecounts)
+require(tidyverse)
+require(unmarked)
+require(lubridate)
+require(reshape)
+require(reshape2)
+require(nloptr)
+library(beepr)
+require(ggpubr)
+library(DMwR2)
+
+out.dir <- paste("Output/")
+
+```
+
+#Format the data for the unmarked framework
+
+```{r unmarked}
+
+#species data
+BAEA<-read.csv("BAEAdetect.csv", row.names="X")
+SUSC<-read.csv("SUSCdetect.csv", row.names="X")
+WWSC<-read.csv("WWSCdetect.csv", row.names="X")
+BLSC<-read.csv("BLSCdetect.csv", row.names="X")
+LTDU<-read.csv("LTDUdetect.csv", row.names="X")
+
+y_list<-list(BAEA=as.matrix(BAEA), 
+             SUSC=as.matrix(SUSC), 
+             WWSC=as.matrix(WWSC), 
+             BLSC=as.matrix(BLSC), 
+             LTDU=as.matrix(LTDU))
+
+#Detection level covariates 
+doy<-read.csv("det_doy.csv", row.name="X")
+tod<-read.csv("det_tod.csv", row.name="X")
+vis<-read.csv("det_vis.csv", row.name="X")
+dur<-read.csv("det_dur.csv", row.name="X")
+
+det_list<-list(TimeofDay=tod, DayofYear = doy, Visibility=vis, Duration = dur)
+
+#Observation level covaraites
+occ_covs<-read.csv("obsCovs.csv", row.names="X")
+
+yr.min<-2000
+yr.max<-2022
+
+mean<-2011.2349132948
+sd<-6.65745963217531
+
+```
+
+#Fit a model with no covariates, assuming independence
+
+To start, we assume independence among species. We do this by only allowing 1st order natural parameters (maxOrder = 1). This is the same as fitting 3 single-species occupancy models
+
+```{r fit1}
+
+msom_data<-unmarkedFrameOccuMulti(y=y_list, siteCovs=occ_covs, obsCovs=det_list)
+
+#msom_data<-unmarkedFrameOccuMulti(y=y_list, siteCovs=occ_covs)
+
+#fit model with no covariates to test 
+summary(msom_data) # to get summary of dataset. Useful output for results of MS. 
+
+fit_1 <- occuMulti(detformulas = c('~1', '~1', '~1', '~1', '~1'),
+                   stateformulas = c('~1', '~1', '~1', '~1', '~1'),
+                   maxOrder = 1,
+                   data = msom_data)
+summary(fit_1)
+
+#AIC = 41449 
+```
+
+#Fit a model with no covarites (intercept-only), assuming dependence
+
+```{r fit2}
+
+fit_2<- occuMulti(detformulas = c('~1', '~1', '~1', '~1', '~1'),
+                   stateformulas = c('~1', '~1', '~1', '~1', '~1','~1', '~1', '~1', '~1', '~1','~1', '~1', '~1', '~1', '~1'),
+                   maxOrder = 2,
+                   data = msom_data)
+summary(fit_2)
+
+#AIC = 39538, suggesting that there is strong support for the model incorporating dependence.
+
+#BAEA occur together more frequently than expected by chance with all the associated prey, expect LTDU.
+```
+
+#Fit a model covarites for maginal model
+
+Detection covaraites fixed as visibility and duration (based on de Zwann)
+
+Interested in the effect of year on occupancy probability, while taking into account spatial autocorrelation using lat and long. 
+
+```{r fit3}
+
+fit_M1<- occuMulti(detformulas = c('~ Visibility + Duration', '~ Visibility + Duration', '~ Visibility + Duration', '~ Visibility + Duration', '~ Visibility + Duration'),
+                   stateformulas = c('~year_st+latitude*longitude', '~year_st+latitude*longitude', '~year_st+latitude*longitude', '~year_st+latitude*longitude', '~year_st+latitude*longitude', '~1', '~1', '~1', '~1', '~1','~1', '~1', '~1', '~1', '~1'),
+                   maxOrder = 2,
+                   data = msom_data)
+summary(fit_M1)
+
+beep(4)
+
+#AIC = 38722
+
+```
+
+
+#M1:Marginal occupancy probability over time, latitude, and longitude
+
+Omit the `cond` argument if you wish to calculate marginal occupancy probability
+Averages over presence / absence of all other species
+
+
+```{r predict marginal}
+
+sp.list<-c("BAEA", "SUSC", "WWSC", "BLSC", "LTDU")
+
+#Margial effect of year  
+nd_marg <- data.frame(
+ year_st = seq(min(occ_covs$year_st), max(occ_covs$year_st),length.out = 100),
+ latitude = rep(mean(occ_covs$latitude), 100), 
+ longitude=rep(mean(occ_covs$longitude), 100)
+)
+
+#sp loop
+for(m in 1:length(sp.list)) {
+  
+ # m<-1 #for testing
+  
+marg <- predict(fit_M1, type = 'state', species = sp.list[m], newdata = nd_marg)
+
+gg_df_marg <- data.frame(
+  hd = nd_marg$year_st,
+  occupancy = marg$Predicted,
+  low = marg$lower,
+  high = marg$upper
+)
+
+#Revert year_st back to Year
+gg_df_marg<-gg_df_marg %>% mutate(Year=(hd+1)+yr.min)   
+
+marg_fig <- ggplot(gg_df_marg, aes(x = Year, y = occupancy)) +
+  geom_ribbon(aes(ymin = low, ymax = high), alpha = 0.5) +
+  geom_line() +
+  ylab('Marginal occupancy probability') +
+  xlab('Year') +
+  theme(text = element_text(size = 25))+
+  theme_classic()
+
+marg_fig
+
+ggsave(paste(out.dir, sp.list[m], "_marginal_time.jpeg", sep=""), width = 11, height = 8, device = "jpeg")
+while (!is.null(dev.list()))  dev.off()
+
+} #end sp Year loop
+
+beep(4)
+```
+
+
+#Conditional occupancy probability
+
+Calculation of conditional and marginal occupancy probabilities is done with the predict function.
+
+Create a data.frame for predictions
+The procedure is equivalent to creating data frames for all other applications of predict
+
+Include complete range of observed *year_st*; hold all other variables at their mean. 
+
+Predicting prey species occurrence when bald eagles are present
+
+`Species` indicates which species we assume when predicting occupancy
+`cond` indicates which species we are assuming is present or absent
+
+
+```{r predict year}
+
+#sp list excluding BAEA
+sp.list<-c("SUSC", "WWSC", "BLSC", "LTDU")
+
+yr_cond <- data.frame(
+  latitude = rep(mean(occ_covs$latitude), 100),
+  longitude = rep(mean(occ_covs$longitude), 100),
+  year_st = seq(min(occ_covs$year_st), max(occ_covs$year_st),length.out = 100))
+
+#sp loop
+for(n in 1:length(sp.list)) {
+  
+BAEA_mod <- predict(fit_M1, type = 'state', species = sp.list[n], cond = 'BAEA', newdata = yr_cond)
+
+#putting a `-`in front of BAEA tells predict you wish to assume they are absent
+
+BAEA_mod_0 <- predict(fit_M1, type = 'state', species = sp.list[n], cond = '-BAEA', newdata = yr_cond)
+
+#formatting ggplot
+
+gg_df_cond <- data.frame(
+  year_st = rep(yr_cond$year_st, 2),
+  occupancy = c(BAEA_mod$Predicted,
+                BAEA_mod_0$Predicted),
+  low = c(BAEA_mod$lower,
+          BAEA_mod_0$lower),
+  high = c(BAEA_mod$upper,
+           BAEA_mod_0$upper),
+  conditional = rep(c('BAEA Present', 'BAEA Absent'),each = 100)
+)
+
+#Revert year_st back to Year
+gg_df_cond<-gg_df_cond %>% mutate(Year=(year_st+1)+yr.min)
+
+cond_fig <- ggplot(gg_df_cond, aes(x = Year, y = occupancy,
+                                   group = conditional)) +
+  geom_ribbon(aes(ymin = low, ymax = high, fill = conditional)) +
+  geom_line() +
+  ylab('Conditionaloccupancy probability') +
+  xlab('Year') +
+  labs(fill = '') +
+  theme(text = element_text(size = 25),
+        legend.position = c(0.75, 0.85))+
+  theme_classic()
+
+cond_fig
+
+ggsave(paste(out.dir, sp.list[n], "_conditional_time.jpeg", sep=""), width = 11, height = 8, device = "jpeg")
+while (!is.null(dev.list()))  dev.off()
+
+} # end sp con loop
+
+beep(4)
+
+```
+
+```{r predict latitude}
+
+lat_cond <- data.frame(
+  year_st = rep(mean(occ_covs$year_st), 100),
+  longitude = rep(mean(occ_covs$longitude), 100),
+  latitude = seq(min(occ_covs$latitude), max(occ_covs$latitude),length.out = 100))
+
+BAEA_SUSC <- predict(fit_M1, type = 'state', species = 'SUSC', cond = 'BAEA', newdata = lat_cond)
+
+#putting a `-`in front of BAEA tells predict you wish to assume they are absent
+
+BAEA_SUSC_0 <- predict(fit_M1, type = 'state', species = 'SUSC', cond = '-BAEA', newdata = lat_cond)
+
+#formatting ggplot
+
+gg_df_cond <- data.frame(
+  latitude = rep(lat_cond$latitude, 2),
+  occupancy = c(BAEA_SUSC$Predicted,
+                BAEA_SUSC_0$Predicted),
+  low = c(BAEA_SUSC$lower,
+          BAEA_SUSC_0$lower),
+  high = c(BAEA_SUSC$upper,
+           BAEA_SUSC_0$upper),
+  conditional = rep(c('BAEA Present', 'BAEA Absent'),each = 100)
+)
+
+cond_fig <- ggplot(gg_df_cond, aes(x = latitude, y = occupancy,
+                                   group = conditional)) +
+  geom_ribbon(aes(ymin = low, ymax = high, fill = conditional)) +
+  geom_line() +
+  ylab('Conditional SUSC\noccupancy probability') +
+  xlab('Latitude') +
+  labs(fill = '') +
+  theme(text = element_text(size = 25),
+        legend.position = c(0.75, 0.85))+
+  theme_classic()
+
+cond_fig
+
+
+```
+
