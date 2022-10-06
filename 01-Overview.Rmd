@@ -1,0 +1,37 @@
+---
+title: "Overview"
+author: "Danielle Ethier"
+date: '2022-06-25'
+output: html_document
+---
+
+These R scripts were created to accommodate the collection, compilation and correlation between numbers of Bald Eagles and sea ducks in specific regions (sub-basins) of the Salish Sea using BC Coastal Waterbird Survey, Christmas Bird Count, and other publicly accessible data sources. 
+
+Objective: Assess the potential effect of a predator (Bald Eagle) population on long-term abundance and distribution patterns of priority sea duck species, and consider the implications the results may have for habitat modeling, and interpretation of long-term monitoring data showing ongoing 20-year declines in Surf, White-winged and Black Scoter and Long-tailed Duck in this region. 
+
+Target regions: 
+3-4 areas 
+- Parksville/Qualicum to Baynes Sound
+- Burrard Inlet – EnglishBay - Howe Sound
+- Fraser Estuary-Boundary-Semiahmoo Bays
+- southern Vancouver Island.  
+
+There will be 15-20+ survey polygons with regular count data in each region
+
+Target sea ducks include: 
+Surf Scoter: Benthivore, Long Distance Migrant
+White-winged Scoter: Benthivore, Short Distance Migrant
+Black Scoter: Benthivore, Long Distance Migrant
+Long-tailed Duck: Benthivore, Long Distance Migrant
+
+
+This research follow from: 
+Middleton, H.A., R.W. Butler and P. Davidson. 2018. Waterbirds alter their distribution and behavior in the presence of bald eagles (Haliaeetus leucocephalus). Northwestern Naturalist, 99(1), pp.21-30. 
+
+Hypothesis from Middleton: 
+1. Flock sizes of scoters will increased with presence of eagles
+2. Diving birds will moved away from shore. 
+
+
+Original Author: Danielle Ethier, Population Scientist, Birds Canada
+Date: 2022
