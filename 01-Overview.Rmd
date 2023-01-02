@@ -14,7 +14,7 @@ Target regions:
 - Parksville/Qualicum to Baynes Sound
 - Burrard Inlet – EnglishBay - Howe Sound
 - Fraser Estuary-Boundary-Semiahmoo Bays
-- southern Vancouver Island.  
+- Southern Vancouver Island.  
 
 There will be 15-20+ survey polygons with regular count data in each region
 
