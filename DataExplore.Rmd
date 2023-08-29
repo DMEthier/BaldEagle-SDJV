@@ -1,0 +1,48 @@
+---
+title: "DataExplore"
+author: "Danielle Ethier"
+date: '2022-06-25'
+output: html_document
+---
+
+#Load libraries
+
+```{r libraries}
+
+#You can install naturecounts from GitHub with the remotes package if you don't have it already. 
+#install.packages("remotes")
+#remotes::install_github("BirdsCanada/naturecounts")
+
+require(naturecounts)
+require(tidyverse)
+
+```
+
+If you have not used the naturecount R package before to explore or access data, you may find this [Introductory Tutorial](https://birdscanada.github.io/NatureCounts_IntroTutorial/) helpful.  
+
+#Explore the data on NatureCounts
+
+Filtering based on geographic extent. Specifically, we will create a `bbox` (bounding box) around the Salish Sea to see what data are available in this area. Coordinates = c(left = -125.76937, bottom = 47.89851, right = -12242952, top = 51.09647) 
+
+search_species_code("BAEA") #3020
+search_species_code("SUSC") #770
+search_species_code("WWSC") #45994
+search_species_code("BLSC") #791
+search_species_code("LTDU") #810
+
+Winter data to correspond with the BCCWS (September 1 to April 30): c(244, 120)
+
+Using the information above, we can query the database.
+
+```{r explore}
+
+BAEA<-nc_count(region = list(bbox = c(left = -125.76937, bottom = 47.89851, right = -122.42952, top = 51.09647)), species = c(3020), doy=c(244,120))
+View(BAEA)
+
+All<-nc_count(region = list(bbox = c(left = -125.76937, bottom = 47.89851, right = -122.42952, top = 51.09647)), species = c(3020, 770, 45994, 791, 810), doy=c(244,120))
+View(All)
+```
+
+The most promising collections look like: BCCWS, CBC, CMMN-DET-RPBO, and EBIRD-CA-BC (may also want to look into EBIRD US, if within scope of the assessment)
+
+RPBO (Rocky Point Bird Observatory): start year = 1998, Fall only 21 July - 18 Oct, Banding + Census, no longer collect waterbird specific data. 
