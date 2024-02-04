@@ -28,12 +28,15 @@ library(beepr)
 require(ggpubr)
 library(DMwR2)
 
-library(rgdal)
+#library(rgdal)
 library(sf)
 library(ggmap)
 library(leaflet)
 library(mapview)
 library(rnaturalearth)
+
+library("ggmap") 
+register_stadiamaps("1cdeb586-3f5a-4ef9-813b-02375efa9f21") 
 
 out.dir <- paste("Output/")
 
@@ -126,7 +129,7 @@ plot <- plot_data %>% select("longitude", "latitude")%>% distinct()
 plot_sf <- st_as_sf(plot, coords = c("longitude", "latitude"), crs = 4326)
 
 #Create the base layer map
-map <- get_stamenmap(bbox = as.numeric(st_bbox(plot_sf)), zoom = 5)
+map <- get_stadiamap(bbox = as.numeric(st_bbox(plot_sf)), zoom = 5)
 
 #Create a new plot for each year
 plot<-ggmap(map) + 
@@ -194,7 +197,6 @@ fit_D<- occuMulti(detformulas = c('~ Duration', '~ Duration', '~ Duration', '~  
                    data = msom_data)
 summary(fit_D)
 
-beep(4)
 
 #AIC = 35183.07 
 
@@ -214,7 +216,6 @@ fit_V<- occuMulti(detformulas = c('~ Visibility', '~ Visibility', '~ Visibility'
                    data = msom_data)
 summary(fit_V)
 
-beep(4)
 
 #AIC = 35200.2
 
@@ -235,7 +236,6 @@ fit_DV<- occuMulti(detformulas = c('~ Visibility + Duration', '~ Visibility + Du
                    data = msom_data)
 summary(fit_DV)
 
-beep(4)
 
 #AIC = 35163.1 
 
@@ -253,7 +253,6 @@ fit_M0<- occuMulti(detformulas = c('~ Visibility + Duration', '~ Visibility + Du
                    data = msom_data)
 summary(fit_M0)
 
-beep(4)
 
 #AIC = 35112.92
 
@@ -274,7 +273,6 @@ fit_lat<- occuMulti(detformulas = c('~ Visibility + Duration', '~ Visibility + D
                    data = msom_data)
 summary(fit_lat)
 
-beep(4)
 
 #AIC = 34482.92
 
@@ -329,8 +327,6 @@ fit_M1<- occuMulti(detformulas = c('~ Visibility + Duration', '~ Visibility + Du
                    maxOrder = 2,
                    data = msom_data)
 summary(fit_M1)
-
-beep(4)
 
 #AIC = 36454.16
 
@@ -582,8 +578,6 @@ ggplot(marg_lat, aes(x = Lat, y = occupancy)) +
   theme_classic()+
    theme(text = element_text(size = 20)) 
 
-
-beep(4)
 ```
 
 
@@ -899,7 +893,6 @@ ggplot(data=all_cond, aes(x=Species, y=Predicted, color=BaldEagle))+
   scale_colour_manual(values = c('black','darkgrey')) +
   theme(text = element_text(size = 20))
 
-beep(3)
 
 ```
 

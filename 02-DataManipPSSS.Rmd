@@ -59,7 +59,7 @@ PSSS Data Manipulation to put in BMDE framework
 
 #break apart position and reform into lat and long
 
-PSSS<-read.csv("Data/PSSS_sample.csv")
+PSSS<-read.csv("Data/PSSSdata.csv")
 
 PSSS$lat<-sub(" W.*", "", PSSS$position)  
 PSSS$long<-sub(".*W", "", PSSS$position)
@@ -167,7 +167,7 @@ dat<-dat %>% mutate(period=ifelse(survey_month %in%c(9, 10, 11, 12), survey_year
 #create new visibility metric, assign NA the mean value (857)
 dat<-dat %>% mutate(visibility=ifelse(EffortMeasurement2=="750m", 750, ifelse(EffortMeasurement2=="500m", 500, ifelse(EffortMeasurement2=="1km", 1000, ifelse(EffortMeasurement2=="100m", 100, ifelse(EffortMeasurement2=="250m", 250, ifelse(EffortMeasurement2=="lt100m", 50, NA))))))) %>% select(-EffortUnits2, -EffortMeasurement2) 
 
-dat<-dat %>% mutate(vis=replace_na(visibility, 857)) %>% select(-visibility)
+dat<-dat %>% mutate(vis=ifelse(is.na(visibility), 857, visibility)) %>% select(-visibility)
 
 #create a new duration metric, assign NA the mean value (0.71)
 #first replace outliers to calculate mean, then replace the outliers with the mean so that we don't have data gaps. 
@@ -395,4 +395,132 @@ write.csv(occ.dat, "obsCovsPSSS.csv")
   
 ```
 
+
+#Review Edits
+
+#Detection matrix all sea ducks combined
+Create the species detection/no detection matrix for target species
+
+
+```{r detect}
+
+dat<-dat %>% mutate(SpeciesCode = ifelse(SpeciesCode %in% c("SUSC", "WWSC", "BLSC", "LTDU"), "ALL", SpeciesCode))
+
+sp.list<-c("BAEA", "ALL")
+
+#create sp loop
+
+for(m in 1:length(sp.list)) {
+  
+ # m<-1 #for testing
+  
+  sp.dat<-dat %>% filter(SpeciesCode==sp.list[m])
+  
+  sp.dat<-sp.dat %>% select(period, survey_month, survey_day, SiteCode, ObservationCount)
+  
+#define the core winter months as Dec-March 
+  
+  sp.dat<-sp.dat %>% filter(survey_month %in% c(12,1,2,3))
+  events1<-events %>% select(-latitude, -longitude)
+  
+#zero-fill the dataframe
+  
+  sp.dat<-left_join(events1, sp.dat, by=c("period", "survey_month", "survey_day", "SiteCode"))
+  
+  sp.dat<-sp.dat %>% distinct(period, survey_month, survey_day, SiteCode, .keep_all = TRUE)
+  
+sp.dat<-sp.dat %>% mutate(detection=ifelse(ObservationCount>=1, 1, 0))  %>% replace_na(list(detection=0)) %>% mutate(Site=paste(SiteCode, period, sep="-")) %>% select(-ObservationCount, -SiteCode, -period, -survey_day) %>% arrange(Site) 
+
+#recast the data.frame  
+  sp<-cast(sp.dat, Site~survey_month, value="detection", fun.aggregate = "max")
+
+#replace Inf in data by NA
+ sp <- do.call(data.frame,lapply(sp, function(x) replace(x,is.infinite(x), NA)))
+ 
+ sp<- sp %>% select(X12, X1, X2, X3)
+ sp<-as.matrix(sp)
+ 
+ write.csv(sp, paste(sp.list[m], "detectPSSS2.csv", sep=""))
+ 
+} # end sp.loop
+
+```
+
+#Observer-level Detection Covariates PSSS
+
+These detection covariates were selected base on modelling outputs from deZwaan's works using the BCCWS (unpublished)
+
+Time of Day = tod
+Day of Year = doy
+Survey duration = duration
+Visibility = vis
+
+```{r detectcov}
+
+cov.dat<-events %>% mutate(Site=paste(SiteCode, period, sep="-"))  %>% select(-SiteCode) %>% arrange(Site)
+
+#Time of Day  
+#recast the data.frame  
+time<-cast(cov.dat, Site~survey_month, value="tod", fun.aggregate = "max")
+
+#replace Inf in data with the mean value
+time <- do.call(data.frame,lapply(time, function(x) replace(x,is.infinite(x), 11.11)))
+
+time<- time %>% select(X12,X1,X2,X3)
+
+#standardize all variables
+time<-time %>% mutate_at(c('X12', 'X1', 'X2', 'X3'), ~(scale(.) %>% as.vector))
+
+time<-as.matrix(time)
+write.csv(time, "detPSSS_tod2.csv")
+
+#Duration
+#recast the data.frame  
+dur<-cast(cov.dat, Site~survey_month, value="duration", fun.aggregate = "max")
+
+#replace Inf in data with the mean value
+dur <- do.call(data.frame,lapply(dur, function(x) replace(x,is.infinite(x), 1.7)))
+
+dur<- dur %>% select(X12,X1,X2,X3)
+
+#standardize all variables
+dur<-dur %>% mutate_at(c('X12', 'X1', 'X2', 'X3'), ~(scale(.) %>% as.vector))
+
+dur<-as.matrix(dur)
+write.csv(dur, "detPSSS_dur2.csv")
+
+#Visibility
+#recast the data.frame  
+vis<-cast(cov.dat, Site~survey_month, value="vis", fun.aggregate = "max")
+
+#replace Inf in data with the mean value
+vis <- do.call(data.frame,lapply(vis, function(x) replace(x,is.infinite(x), 885)))
+
+vis<- vis %>% select(X12,X1,X2,X3)
+
+#standardize all variables
+vis<-vis %>% mutate_at(c('X12', 'X1', 'X2', 'X3'), ~(scale(.) %>% as.vector))
+
+vis<-as.matrix(vis)
+write.csv(vis, "detPSSS_vis2.csv")
+
+#Day of year
+#doy needs to start at 1 and sequence upwards. Import data specific file to do this
+doy<-read.csv("doy.csv")
+doy<-left_join(cov.dat, doy, by="doy")
+
+#recast the data.frame  
+doy<-cast(doy, Site~survey_month, value="Day", fun.aggregate = "max")
+
+#replace Inf in data with the mean value
+doy<- do.call(data.frame,lapply(doy, function(x) replace(x,is.infinite(x), 57.07)))
+doy<- doy %>% select(X12,X1,X2,X3)
+
+#standardize all variables
+doy<-doy%>% mutate_at(c('X12', 'X1', 'X2', 'X3'), ~(scale(.) %>% as.vector))
+
+doy<-as.matrix(doy)
+write.csv(vis, "detPSSS_doy2.csv")
+
+```
 
