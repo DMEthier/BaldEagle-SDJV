@@ -789,7 +789,7 @@ while (!is.null(dev.list()))  dev.off()
 beep(4)
 ```
 
-#Parameter Estimates
+#Parameter Estimates Top Model
 
 ```{r parameters}
 
@@ -797,28 +797,33 @@ beep(4)
 
 #Detection
 
-BAEA_det<-predict(fit_M1, 'det', species=1)[1,] #BAEA
-# Predicted         SE     lower    upper
-# 0.5702764 0.00865294 0.5532409 0.587147
-SUSC_det<-predict(fit_M1, 'det', species=2)[1,]#SUSC
-# Predicted          SE     lower     upper
-# 0.7073459 0.007785279 0.6918573 0.7223683
-WWSC_det<-predict(fit_M1, 'det', species=3)[1,]#WWSC
-# Predicted         SE     lower     upper
-# 0.5356587 0.01378153 0.5085691 0.5625395
-BLSC_det<-predict(fit_M1, 'det', species=4)[1,]#BLSC
-# Predicted        SE     lower     upper
-# 0.259919 0.0229845 0.2174518 0.3074217
-LTDU_det<-predict(fit_M1, 'det', species=5)[1,]#LTDU
-# Predicted         SE     lower     upper
-# 0.4537477 0.02265623 0.4098237 0.4984037
+BAEA_det<-predict(fit_M1, 'det', species=1) #BAEA
+BAEA_det<-BAEA_det %>% mutate(mean= mean(Predicted), se=mean(SE), LCI=mean(lower), UCI = mean(upper))
+BAEA_det<-BAEA_det %>% select(mean, se, LCI, UCI) %>% distinct()
+
+SUSC_det<-predict(fit_M1, 'det', species=2)#SUSC
+SUSC_det<-SUSC_det %>% mutate(mean= mean(Predicted), se=mean(SE), LCI=mean(lower), UCI = mean(upper))
+SUSC_det<-SUSC_det %>% select(mean, se, LCI, UCI) %>% distinct()
+
+WWSC_det<-predict(fit_M1, 'det', species=3)#WWSC
+WWSC_det<-WWSC_det %>% mutate(mean= mean(Predicted), se=mean(SE), LCI=mean(lower), UCI = mean(upper))
+WWSC_det<-WWSC_det %>% select(mean, se, LCI, UCI) %>% distinct()
+
+BLSC_det<-predict(fit_M1, 'det', species=4)#BLSC
+BLSC_det<-BLSC_det %>% mutate(mean= mean(Predicted), se=mean(SE), LCI=mean(lower), UCI = mean(upper))
+BLSC_det<-BLSC_det %>% select(mean, se, LCI, UCI) %>% distinct()
+
+
+LTDU_det<-predict(fit_M1, 'det', species=5)#LTDU
+LTDU_det<-LTDU_det %>% mutate(mean= mean(Predicted), se=mean(SE), LCI=mean(lower), UCI = mean(upper))
+LTDU_det<-LTDU_det %>% select(mean, se, LCI, UCI) %>% distinct()
 
 #Combine and plot
-all_det<-rbind(BAEA_det[1,], SUSC_det[1,], WWSC_det[1,], BLSC_det[1,], LTDU_det[1,])
+all_det<-rbind(BAEA_det, SUSC_det, WWSC_det, BLSC_det, LTDU_det)
 all_det$Species<-c("BAEA", "SUSC", "WWSC", "BLSC", "LTDU")
 
-ggplot(data=all_det, aes(x=Species, y=Predicted))+
-  geom_errorbar(aes(ymin=lower, ymax=upper), width=.1) +
+ggplot(data=all_det, aes(x=Species, y=mean))+
+  geom_errorbar(aes(ymin=LCI, ymax=UCI), width=.1) +
   geom_line()+
   geom_point()+
   theme_classic()+
@@ -826,28 +831,32 @@ ggplot(data=all_det, aes(x=Species, y=Predicted))+
   theme(text = element_text(size = 20))
 
 # marginal occupancy
-BAEA<-predict(fit_M1,'state',species=1)[1,] #BAEA
-# Predicted         SE     lower     upper
-#  0.999964 0.01171052 0.9952265 0.9999996
-SUSC<-predict(fit_M1,'state',species=2)[1,] #SUSC
-#Predicted        SE     lower     upper
-# 0.8685402 0.0323087 0.8144639 0.9231711
-WWSC<-predict(fit_M1,'state',species=3)[1,] #WWSC
-#  Predicted         SE     lower     upper
-# 0.6055305 0.05884499 0.4936151 0.7133683
-BLSC<-predict(fit_M1,'state',species=4)[1,] #BLSC
-# Predicted        SE     lower     upper
-# 0.5664686 0.0663477 0.4357849 0.6799901
-LTDU<-predict(fit_M1,'state',species=5)[1,] #LTDU
-# Predicted         SE     lower     upper
-# 0.5022904 0.05608673 0.3994191 0.6098654
+BAEA<-predict(fit_M1,'state',species=1) #BAEA
+BAEA<-BAEA %>% mutate(mean= mean(Predicted), se=mean(SE), LCI=mean(lower), UCI = mean(upper))
+BAEA<-BAEA %>% select(mean, se, LCI, UCI) %>% distinct()
+
+SUSC<-predict(fit_M1,'state',species=2) #SUSC
+SUSC<-SUSC %>% mutate(mean= mean(Predicted), se=mean(SE), LCI=mean(lower), UCI = mean(upper))
+SUSC<-SUSC %>% select(mean, se, LCI, UCI) %>% distinct()
+
+WWSC<-predict(fit_M1,'state',species=3) #WWSC
+WWSC<-WWSC %>% mutate(mean= mean(Predicted), se=mean(SE), LCI=mean(lower), UCI = mean(upper))
+WWSC<-WWSC %>% select(mean, se, LCI, UCI) %>% distinct()
+
+BLSC<-predict(fit_M1,'state',species=4) #BLSC
+BLSC<-BLSC %>% mutate(mean= mean(Predicted), se=mean(SE), LCI=mean(lower), UCI = mean(upper))
+BLSC<-BLSC %>% select(mean, se, LCI, UCI) %>% distinct()
+
+LTDU<-predict(fit_M1,'state',species=5) #LTDU
+LTDU<-LTDU %>% mutate(mean= mean(Predicted), se=mean(SE), LCI=mean(lower), UCI = mean(upper))
+LTDU<-LTDU %>% select(mean, se, LCI, UCI) %>% distinct()
 
 #Combine and plot
-all_marg<-rbind(BAEA[1,], SUSC[1,], WWSC[1,], BLSC[1,], LTDU[1,])
+all_marg<-rbind(BAEA, SUSC, WWSC, BLSC, LTDU)
 all_marg$Species<-c("BAEA", "SUSC", "WWSC", "BLSC", "LTDU")
 
-ggplot(data=all_marg, aes(x=Species, y=Predicted))+
-  geom_errorbar(aes(ymin=lower, ymax=upper), width=.1) +
+ggplot(data=all_marg, aes(x=Species, y=mean))+
+  geom_errorbar(aes(ymin=LCI, ymax=UCI), width=.1) +
   geom_line()+
   geom_point()+
   theme_classic()+
@@ -856,34 +865,48 @@ ggplot(data=all_marg, aes(x=Species, y=Predicted))+
   theme(text = element_text(size = 20))
   
 # conditional occupancy given bald eagles are present
-SUSC_P<-predict(fit_M1,'state',species=2,cond='BAEA')[1,] #SUSC | BAEA
-WWSC_P<-predict(fit_M1,'state',species=3,cond='BAEA')[1,] #WWSC | BAEA
-BLSC_P<-predict(fit_M1,'state',species=4,cond='BAEA')[1,] #BLSC | BAEA
-LTDU_P<-predict(fit_M1,'state',species=5,cond='BAEA')[1,] #LTDU | BAEA
+SUSC_P<-predict(fit_M1,'state',species=2,cond='BAEA') #SUSC | BAEA
+SUSC_P<-SUSC_P %>% mutate(mean= mean(Predicted), se=mean(SE), LCI=mean(lower), UCI = mean(upper))
+SUSC_P<-SUSC_P %>% select(mean, se, LCI, UCI) %>% distinct()
+
+WWSC_P<-predict(fit_M1,'state',species=3,cond='BAEA') #WWSC | BAEA
+WWSC_P<-WWSC_P %>% mutate(mean= mean(Predicted), se=mean(SE), LCI=mean(lower), UCI = mean(upper))
+WWSC_P<-WWSC_P %>% select(mean, se, LCI, UCI) %>% distinct()
+
+BLSC_P<-predict(fit_M1,'state',species=4,cond='BAEA') #BLSC | BAEA
+BLSC_P<-BLSC_P %>% mutate(mean= mean(Predicted), se=mean(SE), LCI=mean(lower), UCI = mean(upper))
+BLSC_P<-BLSC_P %>% select(mean, se, LCI, UCI) %>% distinct()
+
+LTDU_P<-predict(fit_M1,'state',species=5,cond='BAEA') #LTDU | BAEA
+LTDU_P<-LTDU_P %>% mutate(mean= mean(Predicted), se=mean(SE), LCI=mean(lower), UCI = mean(upper))
+LTDU_P<-LTDU_P %>% select(mean, se, LCI, UCI) %>% distinct()
 
 # conditional occupancy given bald eagles are absent
-SUSC_A<-predict(fit_M1,'state',species=2,cond='-BAEA')[1,] #SUSC | -BAEA
-#Predicted         SE     lower     upper
-# 0.7282869 0.06436705 0.5806021 0.8365924
-WWSC_A<-predict(fit_M1,'state',species=3,cond='-BAEA')[1,] #WWSC | -BAEA
-#  Predicted         SE    lower     upper
-# 0.4372492 0.07259215 0.295413 0.5958355
-BLSC_A<-predict(fit_M1,'state',species=4,cond='-BAEA')[1,] #BLSC | -BAEA
-# Predicted         SE     lower     upper
-# 0.3713964 0.08353649 0.2503643 0.5423962
-LTDU_A<-predict(fit_M1,'state',species=5,cond='-BAEA')[1,] #LTDU | -BAEA
-#  Predicted         SE     lower    upper
-# 0.3021891 0.06978982 0.1914086 0.452256
+SUSC_A<-predict(fit_M1,'state',species=2,cond='-BAEA') #SUSC | -BAEA
+SUSC_A<-SUSC_A %>% mutate(mean= mean(Predicted), se=mean(SE), LCI=mean(lower), UCI = mean(upper))
+SUSC_A<-SUSC_A %>% select(mean, se, LCI, UCI) %>% distinct()
+
+WWSC_A<-predict(fit_M1,'state',species=3,cond='-BAEA') #WWSC | -BAEA
+WWSC_A<-WWSC_A %>% mutate(mean= mean(Predicted), se=mean(SE), LCI=mean(lower), UCI = mean(upper))
+WWSC_A<-WWSC_A %>% select(mean, se, LCI, UCI) %>% distinct()
+
+BLSC_A<-predict(fit_M1,'state',species=4,cond='-BAEA') #BLSC | -BAEA
+BLSC_A<-BLSC_A %>% mutate(mean= mean(Predicted), se=mean(SE), LCI=mean(lower), UCI = mean(upper))
+BLSC_A<-BLSC_A %>% select(mean, se, LCI, UCI) %>% distinct()
+
+LTDU_A<-predict(fit_M1,'state',species=5,cond='-BAEA') #LTDU | -BAEA
+LTDU_A<-LTDU_A %>% mutate(mean= mean(Predicted), se=mean(SE), LCI=mean(lower), UCI = mean(upper))
+LTDU_A<-LTDU_A %>% select(mean, se, LCI, UCI) %>% distinct()
 
 #Combine and plot
-all_cond<-rbind(SUSC_P[1,], WWSC_P[1,], BLSC_P[1,], LTDU_P[1,], SUSC_A[1,], WWSC_A[1,], BLSC_A[1,], LTDU_A[1,])
+all_cond<-rbind(SUSC_P, WWSC_P, BLSC_P, LTDU_P, SUSC_A, WWSC_A, BLSC_A, LTDU_A)
 all_cond$Species<-c("SUSC", "WWSC", "BLSC", "LTDU", "SUSC", "WWSC", "BLSC", "LTDU")
 all_cond$BaldEagle<-c("Present", "Present", "Present", "Present", "Absent", "Absent", "Absent", "Absent")
 
 dodge <- position_dodge(width=0.5) 
 
-ggplot(data=all_cond, aes(x=Species, y=Predicted, color=BaldEagle))+
-  geom_errorbar(aes(ymin=lower, ymax=upper), width=.1, position=dodge) +
+ggplot(data=all_cond, aes(x=Species, y=mean, color=BaldEagle))+
+  geom_errorbar(aes(ymin=mean+se, ymax=mean-se), width=.1, position=dodge) +
   geom_line(position=dodge)+
   geom_point(position=dodge)+
   theme_classic()+
@@ -894,11 +917,20 @@ ggplot(data=all_cond, aes(x=Species, y=Predicted, color=BaldEagle))+
   theme(text = element_text(size = 20))
 
 
+#Significant test
+SUSC_P<-predict(fit_M1,'state',species=2,cond='BAEA') #SUSC | BAEA
+SUSC_A<-predict(fit_M1,'state',species=2,cond='-BAEA') #SUSC | -BAEA
+
+t.test(SUSC_P$Predicted, SUSC_A$Predicted)
+t.test(WWSC_P$Predicted, WWSC_A$Predicted)
+t.test(BLSC_P$Predicted, BLSC_A$Predicted)
+t.test(LTDU_P$Predicted, LTDU_A$Predicted)
+
+
 ```
 
+
 bt<-parboot((fit_M1, nsim=30))
-
-
 unmarkedFitOccuMulti object describing the model fit.
 
 
