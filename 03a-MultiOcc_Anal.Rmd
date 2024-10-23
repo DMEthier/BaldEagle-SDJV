@@ -861,14 +861,9 @@ while (!is.null(dev.list()))  dev.off()
 ## Bootstrapping confidence intervals with 100 samples
 
 #Detection
-
-BAEA_det<-predict(fit_M11, 'det', species=1)[1,] #BAEA
-#  Predicted          SE     lower     upper
-#1 0.5877728 0.006929576 0.5741275 0.6012845
-ALL_det<-predict(fit_M11, 'det', species=2)[1,]#ALL
-# Predicted          SE     lower     upper
-#1 0.7480628 0.005873476 0.7363776 0.7593993
-
+#Code incomplete, see 03
+BAEA_det<-predict(fit_M11, 'det', species=1) #BAEA
+ALL_det<-predict(fit_M11, 'det', species=2)#ALL
 
 #Combine and plot
 all_det<-rbind(BAEA_det[1,], ALL_det[1,])
@@ -882,17 +877,14 @@ ggplot(data=all_det, aes(x=Species, y=Predicted))+
   ylab("Detection probability") +
   theme(text = element_text(size = 20))
 
-# marginal occupancy
-BAEA<-predict(fit_M1,'state',species=1)[1,] #BAEA
-#Predicted         SE     lower     upper
-#1 0.9546969 0.01118197 0.9292771 0.9698831
-ALL<-predict(fit_M1,'state',species=2)[1,] #ALL
-#  Predicted         SE     lower     upper
-#1 0.8635351 0.02130227 0.8157228 0.8985395
+#Marginal occupancy
+#Code incomplete, see 03
+BAEA<-predict(fit_M1,'state',species=1) #BAEA
+ALL<-predict(fit_M1,'state',species=2) #ALL
 
 
 #Combine and plot
-all_marg<-rbind(BAEA[1,], ALL[1,])
+all_marg<-rbind(BAEA, ALL)
 all_marg$Species<-c("BAEA", "ALL")
 
 ggplot(data=all_marg, aes(x=Species, y=Predicted))+
@@ -905,25 +897,24 @@ ggplot(data=all_marg, aes(x=Species, y=Predicted))+
   theme(text = element_text(size = 20))
   
 # conditional occupancy given bald eagles are present
-ALL_P<-predict(fit_M1,'state',species=2,cond='BAEA')[1,] #ALL | BAEA
-#  Predicted         SE     lower     upper
-#1 0.8773727 0.02070756 0.8380489 0.9095835
+ALL_P<-predict(fit_M1,'state',species=2,cond='BAEA') #ALL | BAEA
+ALL_P<-ALL_P %>% mutate(mean= mean(Predicted), se=mean(SE), sd=sd(Predicted),  LCI=mean(lower), UCI = mean(upper))
+ALL_P<-ALL_P %>% select(mean, se, LCI, UCI) %>% distinct()
 
 # conditional occupancy given bald eagles are absent
-ALL_A<-predict(fit_M1,'state',species=2,cond='-BAEA')[1,] #ALL | -BAEA
-#  Predicted         SE     lower     upper
-#1 0.5719276 0.09815233 0.3415074 0.7380504
-
+ALL_A<-predict(fit_M1,'state',species=2,cond='-BAEA') #ALL | -BAEA
+ALL_A<-ALL_A %>% mutate(mean= mean(Predicted), se=mean(SE), sd=sd(Predicted),  LCI=mean(lower), UCI = mean(upper))
+ALL_A<-ALL_A %>% select(mean, se, LCI, UCI) %>% distinct()
 
 #Combine and plot
-all_cond<-rbind(ALL_P[1,], ALL_A[1,])
-all_cond$Species<-c("ALL", "ALL")
-all_cond$BaldEagle<-c("Present", "Absent")
+all_cond2<-rbind(ALL_P, ALL_A)
+all_cond2$Species<-c("ALL", "ALL")
+all_cond2$BaldEagle<-c("Present", "Absent")
 
 dodge <- position_dodge(width=0.5) 
 
-ggplot(data=all_cond, aes(x=Species, y=Predicted, color=BaldEagle))+
-  geom_errorbar(aes(ymin=lower, ymax=upper), width=.1, position=dodge) +
+ggplot(data=all_cond2, aes(x=Species, y=mean, color=BaldEagle))+
+  geom_errorbar(aes(ymin=mean+se, ymax=mean-se), width=.1, position=dodge) +
   geom_line(position=dodge)+
   geom_point(position=dodge)+
   theme_classic()+

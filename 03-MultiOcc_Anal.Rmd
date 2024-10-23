@@ -905,8 +905,8 @@ all_cond$BaldEagle<-c("Present", "Present", "Present", "Present", "Absent", "Abs
 
 dodge <- position_dodge(width=0.5) 
 
-ggplot(data=all_cond, aes(x=Species, y=mean, color=BaldEagle))+
-  geom_errorbar(aes(ymin=mean+se, ymax=mean-se), width=.1, position=dodge) +
+ggplot(data=new_cond, aes(x=Species, y=mean, color=BaldEagle))+
+  geom_errorbar(aes(ymin=LCI, ymax=UCI), width=.1, position=dodge) +
   geom_line(position=dodge)+
   geom_point(position=dodge)+
   theme_classic()+
