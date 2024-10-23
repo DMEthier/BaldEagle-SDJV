@@ -1,0 +1,75 @@
+---
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r lat combine}
+marg_time<-read.csv("Output/time_marg_combine.csv")
+marg_time<-na.omit(marg_time)
+
+ggplot(marg_time, aes(x = Year, y = occupancy)) +
+  geom_ribbon(aes(ymin = low, ymax = high), alpha = 0.5) +
+  geom_line() +
+  ylab('Marginal occupancy') +
+  xlab('Year') +
+  facet_wrap(~factor(Species, levels=c('BAEA', 'BLSC', 'LTDU', 'SUSC', 'WWSC', 'ALL')), scales="free")+
+  theme_classic()+
+  scale_x_continuous(limits = c(2010, 2022), breaks = c(2010, 2012, 2014, 2016, 2018, 2020, 2022))+
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))+
+  theme(text = element_text(size = 20)) 
+
+
+marg_lat<-read.csv("Output/lat_marg_combine.csv")
+marg_lat<-na.omit(marg_lat)
+
+ggplot(marg_lat, aes(x = Lat, y = occupancy)) +
+  geom_ribbon(aes(ymin = low, ymax = high), alpha = 0.5) +
+  geom_line() +
+  ylab('Marginal occupancy') +
+  xlab('Latitude') +
+  facet_wrap(~factor(Species, levels=c('BAEA', 'BLSC', 'LTDU', 'SUSC', 'WWSC', 'ALL')), scales="free")+
+  theme_classic()+
+   theme(text = element_text(size = 20)) 
+
+
+marg_long<-read.csv("Output/long_marg_combine.csv")
+marg_long<-na.omit(marg_long)
+
+ggplot(marg_long, aes(x = Long, y = occupancy)) +
+  geom_ribbon(aes(ymin = low, ymax = high), alpha = 0.5) +
+  geom_line() +
+  ylab('Marginal occupancy') +
+  xlab('Longitude') +
+  facet_wrap(~factor(Species, levels=c('BAEA', 'BLSC', 'LTDU', 'SUSC', 'WWSC', 'ALL')), scales="free")+
+  theme_classic()+
+   scale_x_continuous(limits = c(-125.25, -122.25), breaks = c(-125, -124, -123, -122))+
+   theme(text = element_text(size = 20)) 
+
+```
+
+Need to run both models to make this work so that the output are in your 'Environmnents'
+
+```{r conditional plot}
+
+
+#Combine and plot
+all_cond<-rbind(SUSC_P[1,], WWSC_P[1,], BLSC_P[1,], LTDU_P[1,], ALL_P[1,], SUSC_A[1,], WWSC_A[1,], BLSC_A[1,], LTDU_A[1,], ALL_A[1,])
+all_cond$Species<-c("SUSC", "WWSC", "BLSC", "LTDU", "ALL", "SUSC", "WWSC", "BLSC", "LTDU", "ALL")
+all_cond$BaldEagle<-c("Present", "Present", "Present", "Present", "Present", "Absent", "Absent", "Absent", "Absent", "Absent")
+
+dodge <- position_dodge(width=0.5) 
+
+ggplot(data=all_cond, aes(x=factor(Species, level=c('BAEA', 'BLSC', 'LTDU', 'SUSC', 'WWSC', 'ALL')), y=Predicted, color=BaldEagle))+
+  geom_errorbar(aes(ymin=lower, ymax=upper), width=.1, position=dodge) +
+  geom_line(position=dodge)+
+  geom_point(position=dodge)+
+  theme_classic()+
+  labs(fill="Bald Eagle")+
+  ylab("Conditional occupancy probability") +
+  xlab("")+
+  scale_colour_manual(values = c('black','darkgrey')) +
+  theme(text = element_text(size = 20))
+
+
+```
