@@ -130,7 +130,7 @@ test2<-events %>% group_by(SiteCode) %>% summarise(yrs=n_distinct(period)) %>% f
 
 events<-inner_join(events, test2, by=c("SiteCode"))
 
-#write.csv(events, "EventsBCCWS.csv")
+write.csv(events, "EventsBCCWS.csv")
 #events<-read.csv("EventsBCCWS.csv")
 
 ```
